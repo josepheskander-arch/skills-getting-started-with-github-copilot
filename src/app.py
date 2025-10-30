@@ -111,3 +111,30 @@ def signup_for_activity(activity_name: str, email: str):
     # Add student
     activity["participants"].append(email)
     return {"message": f"Signed up {email} for {activity_name}"}
+
+
+@app.post("/activities/{activity_name}/unregister")
+def unregister_participant(activity_name: str, participant: str):
+    """Unregister a participant from an activity.
+
+    Expects a query parameter 'participant' which is the participant identifier
+    (e.g. email). Returns a confirmation message on success.
+    """
+    # Validate activity exists
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    activity = activities[activity_name]
+
+    # Validate participant is currently signed up
+    if participant not in activity.get("participants", []):
+        raise HTTPException(status_code=404, detail="Participant not found in activity")
+
+    # Remove participant
+    try:
+        activity["participants"].remove(participant)
+    except ValueError:
+        # Shouldn't happen because of the membership check, but be safe
+        raise HTTPException(status_code=500, detail="Failed to remove participant")
+
+    return {"message": f"Removed {participant} from {activity_name}"}

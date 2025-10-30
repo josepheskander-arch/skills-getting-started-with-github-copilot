@@ -12,6 +12,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Clear loading message
       activitiesList.innerHTML = "";
+      // Reset activity select options (keep placeholder)
+      if (activitySelect) {
+        activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
+      }
 
       // Helper to format participant display text
       function formatParticipant(p) {
@@ -30,13 +34,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
-        // Build participants list HTML
+        // Build participants list HTML with delete icon
         let participantsHtml = "";
         if (Array.isArray(details.participants) && details.participants.length > 0) {
           const items = details.participants
-            .map((p) => `<li>${escapeHtml(formatParticipant(p))}</li>`)
+            .map((p) => {
+              const participantId = typeof p === "object" ? (p.email || p.name || JSON.stringify(p)) : p;
+              return `<li data-activity="${escapeHtml(name)}" data-participant="${escapeHtml(participantId)}">
+                <span class="participant-name">${escapeHtml(formatParticipant(p))}</span>
+                <span class="delete-participant" title="Remove participant">&#128465;</span>
+              </li>`;
+            })
             .join("");
-          participantsHtml = `<ul class="participants-list">${items}</ul>`;
+          participantsHtml = `<ul class="participants-list no-bullets">${items}</ul>`;
         } else {
           participantsHtml = `<p class="participants-empty">No participants yet</p>`;
         }
@@ -52,10 +62,44 @@ document.addEventListener("DOMContentLoaded", () => {
             ${participantsHtml}
           </div>
         `;
+  // Delegate click event for delete icon
+  document.addEventListener("click", async (event) => {
+    if (event.target.classList.contains("delete-participant")) {
+      const li = event.target.closest("li[data-activity][data-participant]");
+      if (!li) return;
+      const activity = li.getAttribute("data-activity");
+      const participant = li.getAttribute("data-participant");
+      if (!activity || !participant) return;
+
+      // Call API to unregister participant
+      try {
+        const response = await fetch(`/activities/${encodeURIComponent(activity)}/unregister?participant=${encodeURIComponent(participant)}`, {
+          method: "POST"
+        });
+        const result = await response.json();
+        if (response.ok) {
+          messageDiv.textContent = result.message || "Participant removed.";
+          messageDiv.className = "success";
+          fetchActivities();
+        } else {
+          messageDiv.textContent = result.detail || "Failed to remove participant.";
+          messageDiv.className = "error";
+        }
+        messageDiv.classList.remove("hidden");
+        setTimeout(() => {
+          messageDiv.classList.add("hidden");
+        }, 3000);
+      } catch (error) {
+        messageDiv.textContent = "Error removing participant.";
+        messageDiv.className = "error";
+        messageDiv.classList.remove("hidden");
+      }
+    }
+  });
 
         activitiesList.appendChild(activityCard);
 
-        // Add option to select dropdown
+    // Add option to select dropdown
         const option = document.createElement("option");
         option.value = name;
         option.textContent = name;
@@ -99,6 +143,8 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        // Refresh activities so the UI shows the newly-registered participant
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
