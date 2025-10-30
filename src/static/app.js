@@ -13,6 +13,16 @@ document.addEventListener("DOMContentLoaded", () => {
       // Clear loading message
       activitiesList.innerHTML = "";
 
+      // Helper to format participant display text
+      function formatParticipant(p) {
+        if (!p && p !== 0) return "";
+        if (typeof p === "string") return p;
+        if (typeof p === "object") {
+          return p.name || p.email || JSON.stringify(p);
+        }
+        return String(p);
+      }
+
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
@@ -20,11 +30,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
+        // Build participants list HTML
+        let participantsHtml = "";
+        if (Array.isArray(details.participants) && details.participants.length > 0) {
+          const items = details.participants
+            .map((p) => `<li>${escapeHtml(formatParticipant(p))}</li>`)
+            .join("");
+          participantsHtml = `<ul class="participants-list">${items}</ul>`;
+        } else {
+          participantsHtml = `<p class="participants-empty">No participants yet</p>`;
+        }
+
         activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
+          <h4>${escapeHtml(name)}</h4>
+          <p>${escapeHtml(details.description)}</p>
+          <p><strong>Schedule:</strong> ${escapeHtml(details.schedule)}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+
+          <div class="participants-section">
+            <h5>Participants</h5>
+            ${participantsHtml}
+          </div>
         `;
 
         activitiesList.appendChild(activityCard);
@@ -39,6 +65,17 @@ document.addEventListener("DOMContentLoaded", () => {
       activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
       console.error("Error fetching activities:", error);
     }
+  }
+
+  // Small helper to escape HTML to avoid injection when inserting strings
+  function escapeHtml(str) {
+    if (typeof str !== "string") return str;
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   // Handle form submission
