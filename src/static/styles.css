@@ -142,3 +142,67 @@ footer {
   padding: 20px;
   color: #666;
 }
+
+/* New styles for participants section */
+.participants-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #eee;
+}
+
+.participants-section h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #1a237e;
+}
+
+/* Bulleted participants list with subtle styling */
+
+.participants-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: block;
+  gap: 6px;
+}
+
+.participants-list.no-bullets {
+  list-style: none;
+}
+
+.participants-list li {
+  background: linear-gradient(90deg, rgba(26,35,126,0.03), rgba(255,255,255,0));
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  display: flex;
+  align-items: center;
+}
+
+/* Small colored dot avatar before each participant */
+
+/* Remove bullet/dot avatar for no-bullets */
+.participants-list.no-bullets li::before {
+  display: none;
+}
+
+.delete-participant {
+  margin-left: 10px;
+  color: #c62828;
+  cursor: pointer;
+  font-size: 16px;
+  transition: color 0.2s;
+}
+.delete-participant:hover {
+  color: #b71c1c;
+}
+
+.participants-empty {
+  font-style: italic;
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+  padding: 6px 0;
+}
